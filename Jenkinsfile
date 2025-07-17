@@ -2,10 +2,10 @@
 pipeline {
     agent any // Tells Jenkins to run this pipeline on any available agent (your Docker container in this case)
 
-    environment {
+    //environment {
         // Define environment variables if needed.
         // Example: PLAYWRIGHT_BROWSERS_PATH = '/ms-playwright'
-    }
+    //}
 
     stages {
         stage('Setup Environment and Run Tests') {
