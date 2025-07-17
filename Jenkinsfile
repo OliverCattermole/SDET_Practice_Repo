@@ -20,7 +20,7 @@ pipeline {
                     sh '. venv_jenkins/bin/activate' // Using '.' for POSIX compatibility
 
                     // Install Python dependencies (including requests and allure-pytest)
-                    sh 'pip install -r requirements.txt'
+                    sh 'venv_jenkins/bin/pip install -r requirements.txt'
 
                     // Install Playwright browser binaries and dependencies
                     sh 'playwright install-deps' // Ensure system dependencies are also installed
