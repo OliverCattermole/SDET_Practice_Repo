@@ -27,7 +27,7 @@ pipeline {
 
                     // Run your Pytest tests and generate Allure results
                     // The '.' means "discover tests in the current directory (Test_Scripts)"
-                    sh 'pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py'
+                    sh 'venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py'
                 }
             }
         }
