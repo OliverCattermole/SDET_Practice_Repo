@@ -23,7 +23,7 @@ pipeline {
                     sh 'venv_jenkins/bin/pip install -r requirements.txt'
 
                     // Install Playwright browser binaries and dependencies
-                    sh 'playwright install-deps' // Ensure system dependencies are also installed
+                    sh 'venv_jenkins/bin/playwright install-deps' // Ensure system dependencies are also installed
 
                     // Run your Pytest tests and generate Allure results
                     // The '.' means "discover tests in the current directory (Test_Scripts)"
