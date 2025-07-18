@@ -28,6 +28,58 @@ def test_get_single_post():
     assert "body" in post_data
     print(f"GET single post (ID {post_id}) successful. Title: {post_data['title'][:30]}...")
 
+# A couple of data Driven API tests
+
+@pytest.mark.parametrize("post_id, expected_title_contains", [
+    (1, "sunt aut facere"),  # Valid post 1
+    (10, "optio molestias id quia eum"), # Valid post 10
+    (100, "at nam consequatur"), # Valid post 100
+    (999999, None)  # Non-existent post (we'll adapt the test for this)
+])
+def test_get_single_post_data_driven(post_id, expected_title_contains):
+    """
+    Tests retrieving a single post by ID using parametrization.
+    """
+    response = requests.get(f"{BASE_URL}/posts/{post_id}")
+
+    if expected_title_contains is not None:
+        # For valid posts
+        assert response.status_code == 200
+        post_data = response.json()
+        assert post_data["id"] == post_id
+        assert expected_title_contains in post_data["title"]
+        print(f"GET post ID {post_id} successful. Title contains: '{expected_title_contains}'.")
+    else:
+        # For non-existent posts
+        assert response.status_code == 404
+        print(f"GET non-existent post ID {post_id} returned 404 as expected.")
+
+@pytest.mark.parametrize("test_case_name, payload, expected_status_code", [
+    ("Valid Post Creation", {"title": "Test Title 1", "body": "Test Body 1", "userId": 1}, 201),
+    ("Another Valid Post", {"title": "Another Title", "body": "Another Body", "userId": 2}, 201),
+    ("Post with Missing Body", {"title": "No Body Post", "userId": 3}, 201), # JSONPlaceholder often still accepts this
+    ("Post with Extra Field", {"title": "Extra Field", "body": "Data", "extra_field": "value", "userId": 4}, 201)
+    # JSONPlaceholder is very forgiving; a real API would likely return 400 for invalid payloads
+])
+def test_create_post_data_driven(test_case_name, payload, expected_status_code):
+    """
+    Tests creating posts with different payloads using parametrization.
+    """
+    print(f"\n--- Running Test Case: {test_case_name} ---")
+    response = requests.post(f"{BASE_URL}/posts", json=payload)
+    assert response.status_code == expected_status_code
+
+    if expected_status_code == 201:
+        response_json = response.json()
+        # Assert that the received data matches the sent payload (or a subset)
+        for key, value in payload.items():
+            assert response_json.get(key) == value
+        assert "id" in response_json # Ensure an ID was assigned
+        print(f"Post created successfully with ID: {response_json.get('id')}. Title: {response_json.get('title')}.")
+    else:
+        print(f"Post creation failed as expected with status code: {response.status_code}.")
+
+
 def test_create_new_post():
     """
     Tests creating a new post using POST request.

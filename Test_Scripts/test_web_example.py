@@ -4,6 +4,8 @@ from playwright.sync_api import Page, expect
 # The 'page' fixture is automatically provided by pytest-playwright
 # It represents a single browser tab/page.
 
+from pages.login_page import LoginPage
+
 def test_example_page_title(page: Page):
     """
     Tests that the Playwright doc page has the correct title.
@@ -62,6 +64,32 @@ def test_invalid_login_scenario(page: Page):
     expect(page.locator("[data-test=\"error\"]")).to_have_text("Epic sadface: Username and password do not match any user in this service")
     print("\nInvalid login error message verified.")
     page.screenshot(path="invalid_login_error.png")
+
+
+def test_invalid_login_scenario_with_page_object(page: Page):
+    """
+    Simulates an invalid login and asserts an error message using POM.
+    """
+    login_page = LoginPage(page) # Instantiate the Page Object, passing the Playwright page fixture
+
+    login_page.navigate() # Use the Page Object's navigation method
+    login_page.login("invalid_user", "wrong_password") # User the Page Object's login method
+
+    expect(login_page.error_message).to_have_text("Epic sadface: Username and password do not match any user in this service")
+    print("\nInvalid login error message verified.")
+    page.screenshot(path="invalid_login_error_page_object.png")
+
+# Robust method
+
+def test_successful_login_scenario(page: Page): # Assuming you have a successful login test
+    """
+    Simulates a successful login and asserts navigation using POM with explicit waits.
+    """
+    login_page = LoginPage(page)
+    login_page.navigate()
+    login_page.login_and_expect_success("standard_user", "secret_sauce") # Uses the new robust method
+    print("\nSuccessful login verified using robust Page Object Model.")
+    page.screenshot(path="successful_login_pom.png")
 
 
 # Basic Network Interception
