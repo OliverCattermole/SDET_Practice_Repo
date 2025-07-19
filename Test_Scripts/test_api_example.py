@@ -2,6 +2,8 @@
 import pytest
 import requests
 BASE_URL = "https://jsonplaceholder.typicode.com"  # A public API for mock data
+import json
+from jsonschema import validate, ValidationError
 
 def test_get_all_posts():
     """
@@ -137,3 +139,56 @@ def test_get_non_existent_post():
     response = requests.get(f"{BASE_URL}/posts/{post_id}")
     assert response.status_code == 404
     print(f"GET non-existent post (ID {post_id}) returned 404 as expected.")
+
+# JSON Schema related tests
+
+def load_json_schema(filename):
+    """Loads a JSON schema from the 'schemas' directory."""
+    filepath = f"Test_Scripts/schemas/{filename}" # Adjust path if your schemas folder is elsewhere
+    with open(filepath, 'r') as file:
+        return json.load(file)
+
+POST_SCHEMA = load_json_schema("post_schema.json")
+
+def test_get_single_post_schema_validation():
+    """
+    Tests retrieving a single valid post and validates its schema.
+    """
+    post_id = 1
+    response = requests.get(f"{BASE_URL}/posts/{post_id}")
+    assert response.status_code == 200
+    post_data = response.json()
+
+    try:
+        validate(instance=post_data, schema=POST_SCHEMA)
+        print(f"\nResponse for post ID {post_id} successfully validated against schema.")
+    except ValidationError as e:
+        pytest.fail(f"Schema validation failed for post ID {post_id}:\n{e.message}\nPath: {e.path}\nValidator: {e.validator}\nValidator Value: {e.validator_value}")
+
+# Optional: Test with an invalid schema (if you can simulate one)
+# This example will fail on purpose to show validation errors
+def test_invalid_post_schema_validation_example():
+    """
+    Demonstrates schema validation failure with an invalid response structure.
+    This test is expected to fail.
+    """
+    invalid_data = {
+        "userId": "1", # Should be integer, not string
+        "id": 1,
+        "title": "A valid title",
+        "body": "A valid body",
+        "extraField": "unexpected value" # additionalProperties: false should catch this
+    }
+    # For demonstration, we'll try to validate this incorrect data against our schema
+    # In a real test, you'd be getting this from an API call that returned bad data
+
+    try:
+        validate(instance=invalid_data, schema=POST_SCHEMA)
+        pytest.fail("Schema validation unexpectedly passed for invalid data!")
+    except ValidationError as e:
+        print(f"\nSuccessfully caught expected schema validation error:\n{e.message}\nPath: {e.path}\nValidator: {e.validator}\nValidator Value: {e.validator_value}")
+        # Assert specific aspects of the error if needed
+        assert "is not of type 'integer'" in e.message or "'extraField' was unexpected" in e.message
+        assert (e.path and e.path[0] == "userId") or e.validator == "additionalProperties"
+        print("Expected schema validation error caught successfully.")
+

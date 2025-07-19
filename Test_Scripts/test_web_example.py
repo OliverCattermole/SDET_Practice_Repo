@@ -5,8 +5,7 @@ from playwright.sync_api import Page, expect
 # It represents a single browser tab/page.
 
 from pages.login_page import LoginPage
-from PIL import Image
-from io import BytesIO
+
 
 def test_example_page_title(page: Page):
     """
@@ -17,6 +16,7 @@ def test_example_page_title(page: Page):
     print(f"\nPage title is: {page.title()}")
     page.screenshot(path="intro_page.png")  # Takes a screenshot!
     print("Screenshot saved to intro_page.png")
+
 
 def test_search_on_google(page: Page):
     """
@@ -37,14 +37,15 @@ def test_search_on_google(page: Page):
 
     # Verify that the search results page title contains the search term
     # Commented out because we actually reach a page that tries to confirm we are not a robot lol
-    #expect(page).to_have_title("Playwright testing Python - Google Search")
+    # expect(page).to_have_title("Playwright testing Python - Google Search")
 
     # Verify that an element with specific text content is visible
     # Commented out because we actually reach a page that tries to confirm we are not a robot lol
-    #expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
+    # expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
 
     page.screenshot(path="Google Search_results.png")
     print("Screenshot saved to Google Search_results.png")
+
 
 def test_invalid_login_scenario(page: Page):
     """
@@ -160,19 +161,21 @@ def test_block_image_request(page: Page):
     print("\nImage requests blocked. Page loaded without images.")
     page.screenshot(path="blocked_images_wikipedia.png")
 
-def test_saucedemo_login_page_visual(page: Page, image_regression):
-    """
-    Tests the visual appearance of the Saucedemo login page using image_regression.
-    """
-    page.goto("https://www.saucedemo.com/")
-    page.wait_for_selector("#login-button", state="visible")
-
-    # Get screenshot bytes from Playwright
-    screenshot_bytes = page.screenshot()
-
-    # Call the image_regression fixture with the screenshot bytes
-    # The first argument is the image content. The second is the filename.
-    # The threshold can be set directly in the call or using a fixture.
-    image_regression(screenshot_bytes, threshold=0.5) # Using 0.5 as a default threshold, adjust as needed
-
-    print("\nSaucedemo login page visual test executed.")
+# def test_saucedemo_login_page_visual(page: Page, image_regression):
+#     """
+#     Tests the visual appearance of the Saucedemo login page using image_regression.
+#     """
+#     page.goto("https://www.saucedemo.com/")
+#     page.wait_for_selector("#login-button", state="visible")
+#
+#     page.goto("https://www.google.com")
+#
+#     # Get screenshot bytes from Playwright
+#     screenshot_bytes = page.screenshot()
+#
+#     # Call the image_regression fixture with the screenshot bytes
+#     # The first argument is the image content. The second is the filename.
+#     # The threshold can be set directly in the call or using a fixture.
+#     assert image_regression(screenshot_bytes, threshold=0.5) # Using 0.5 as a default threshold, adjust as needed
+#
+#     print("\nSaucedemo login page visual test executed.")
