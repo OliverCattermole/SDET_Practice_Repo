@@ -45,6 +45,39 @@ pipeline {
                 ])
             }
         }
+
+        stage('Use Secret Credentials') {
+            steps {
+                script {
+                    // --- Using Secret Text Credential ---
+                    // 'string' type for Secret Text
+                    withCredentials([string(credentialsId: 'MY_DUMMY_API_TOKEN', variable: 'API_TOKEN_VAR')]) {
+                        sh '''
+                        echo "Attempting to use API Token..."
+                        # NEVER print the raw variable directly in production: echo "API_TOKEN_VAR: $API_TOKEN_VAR"
+                        # Simulate usage, Jenkins will mask it if the value is detected:
+                        echo "API_Token_Start: ${API_TOKEN_VAR}" # This will be masked in logs
+                        echo "curl -H \\"Authorization: Bearer ${API_TOKEN_VAR}\\" https://api.example.com/data"
+                        echo "API_Token_End: ${API_TOKEN_VAR}"
+                        '''
+                    }
+
+                    // --- Using Username with Password Credential ---
+                    // 'usernamePassword' type for Username with Password
+                    withCredentials([usernamePassword(credentialsId: 'MY_DUMMY_USER_PASS', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS')]) {
+                        sh '''
+                        echo "Attempting to connect to Database..."
+                        # Access username as $DB_USER and password as $DB_PASS
+                        echo "DB_User_Start: ${DB_USER}" # This will be masked in logs
+                        echo "DB_Pass_Start: ${DB_PASS}" # This will be masked in logs
+                        echo "mysql -u ${DB_USER} -p${DB_PASS} database_name"
+                        echo "DB_User_End: ${DB_USER}"
+                        echo "DB_Pass_End: ${DB_PASS}"
+                        '''
+                    }
+                }
+            }
+        }
     }
 
     post {
