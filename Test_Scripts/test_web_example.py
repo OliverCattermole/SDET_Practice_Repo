@@ -5,6 +5,8 @@ from playwright.sync_api import Page, expect
 # It represents a single browser tab/page.
 
 from pages.login_page import LoginPage
+from PIL import Image
+from io import BytesIO
 
 def test_example_page_title(page: Page):
     """
@@ -157,3 +159,20 @@ def test_block_image_request(page: Page):
     expect(page.locator("h1")).to_have_text("Wikipedia:Picture of the day")
     print("\nImage requests blocked. Page loaded without images.")
     page.screenshot(path="blocked_images_wikipedia.png")
+
+def test_saucedemo_login_page_visual(page: Page, image_regression):
+    """
+    Tests the visual appearance of the Saucedemo login page using image_regression.
+    """
+    page.goto("https://www.saucedemo.com/")
+    page.wait_for_selector("#login-button", state="visible")
+
+    # Get screenshot bytes from Playwright
+    screenshot_bytes = page.screenshot()
+
+    # Call the image_regression fixture with the screenshot bytes
+    # The first argument is the image content. The second is the filename.
+    # The threshold can be set directly in the call or using a fixture.
+    image_regression(screenshot_bytes, threshold=0.5) # Using 0.5 as a default threshold, adjust as needed
+
+    print("\nSaucedemo login page visual test executed.")

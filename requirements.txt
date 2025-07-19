@@ -4,3 +4,6 @@ pytest-xdist
 requests
 allure-pytest
 pytest-rerunfailures
+jsonschema
+pytest-image-diff
+pixelmatch
