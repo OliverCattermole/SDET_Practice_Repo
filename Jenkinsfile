@@ -1,33 +1,11 @@
 // Jenkinsfile
 pipeline {
-    agent {
-        // This 'agent' block tells Jenkins to build a Docker image from the Dockerfile
-        // located at the root of your project, and then run all pipeline stages
-        // inside a container launched from that image.
-        dockerfile {
-            // Optional: You can specify a custom Dockerfile path if it's not in the root
-            // dir 'path/to/Dockerfile'
+    agent any // Tells Jenkins to run this pipeline on any available agent (your Docker container in this case)
 
-            // Optional: Give your image a specific tag (e.g., based on build number)
-            // Helps in managing multiple images if needed
-            // label 'my-playwright-test-agent' // Label for Jenkins agent capabilities
-
-            // Optional: Pass arguments to docker build command (e.g., build args, target)
-            // args '-t my-playwright-tests:latest'
-
-            // Pass credentials if your Dockerfile needs to pull from a private registry (unlikely for this lesson)
-            // registryCredentialsId 'docker-hub-credentials'
-        }
-    }
-
-    environment {
-        // Important: When running Playwright in Docker, you often need to set PLAYWRIGHT_BROWSERS_PATH
-        // Playwright usually puts browsers in ~/.cache/ms-playwright/
-        // For Docker, it's safer to point it to /ms-playwright-browsers which is where the Playwright Docker image stores them
-        PLAYWRIGHT_BROWSERS_PATH = '/ms-playwright-browsers'
-        // Playwright also needs to know which host to connect to (localhost usually works for basic web servers)
-        // This is more relevant if your web app under test is *also* in a container, we'll keep it simple for now.
-    }
+    //environment {
+        // Define environment variables if needed.
+        // Example: PLAYWRIGHT_BROWSERS_PATH = '/ms-playwright'
+    //}
 
     stages {
         stage('Setup Environment and Run Tests') {
@@ -38,14 +16,14 @@ pipeline {
                     sh 'apt-get install -y python3 python3-venv'
 
                     // Create and activate a virtual environment
-                    //sh 'python3 -m venv venv_jenkins'
-                    //sh '. venv_jenkins/bin/activate' // Using '.' for POSIX compatibility
+                    sh 'python3 -m venv venv_jenkins'
+                    sh '. venv_jenkins/bin/activate' // Using '.' for POSIX compatibility
 
                     // Install Python dependencies (including requests and allure-pytest)
-                    //sh 'venv_jenkins/bin/pip install -r requirements.txt'
+                    sh 'venv_jenkins/bin/pip install -r requirements.txt'
 
                     // Install Playwright browser binaries and dependencies
-                    //sh 'venv_jenkins/bin/playwright install-deps' // Ensure system dependencies are also installed
+                    sh 'venv_jenkins/bin/playwright install-deps' // Ensure system dependencies are also installed
 
                     // Run your Pytest tests and generate Allure results
                     // The '.' means "discover tests in the current directory (Test_Scripts)"
