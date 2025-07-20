@@ -10,7 +10,7 @@ pipeline {
 
             // Optional: Give your image a specific tag (e.g., based on build number)
             // Helps in managing multiple images if needed
-             label 'my-playwright-test-agent' // Label for Jenkins agent capabilities
+            // label 'my-playwright-test-agent' // Label for Jenkins agent capabilities
 
             // Optional: Pass arguments to docker build command (e.g., build args, target)
             // args '-t my-playwright-tests:latest'
