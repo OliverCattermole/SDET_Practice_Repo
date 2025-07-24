@@ -50,7 +50,7 @@ pipeline {
             steps {
                 script {
                     echo "Starting Docker Compose services in detached mode..."
-                    sh 'docker compose up -d --build' # This should now work!
+                    sh 'docker compose up -d --build' // This should now work!
 
                     echo "Waiting for test_db service to be ready..."
                     withCredentials([usernamePassword(credentialsId: 'MY_DUMMY_USER_PASS', usernameVariable: 'DB_USER_VAR', passwordVariable: 'DB_PASS_VAR')]) {
