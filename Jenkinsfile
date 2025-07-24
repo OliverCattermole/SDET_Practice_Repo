@@ -1,61 +1,50 @@
-// Jenkinsfile
+// Jenkinsfile (Adapted for Docker-from-Docker on the Jenkins Agent)
 pipeline {
-    agent any // Tells Jenkins to run this pipeline on any available agent (your Docker container in this case)
+    agent {
+        docker {
+            // Use an image that has the Docker CLI installed.
+            // 'jenkins/jnlp-agent-docker' is a good choice if available,
+            // or even a simple 'ubuntu:latest' and then mount the docker binary/socket.
+            // A common pattern is to use an image that already includes many build tools,
+            // or to build your own custom agent image.
+            // For simplicity, let's use a standard Linux image and manually prepare it
+            // by mounting what's needed.
+            // A more direct option if you are using Docker Engine as agent's host:
+            image 'ubuntu:latest' // Or 'python:3.10-slim-bookworm' if you prefer Python already there
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
+            // The above args are critical: they map the host's docker socket and binary into the agent container.
+            // This means the 'docker' command inside the agent talks to the host's Docker daemon.
+            // For a more robust setup, you might use 'jenkins/jnlp-agent-docker' or build your own.
+        }
+    }
 
-    // It's good practice to define environment variables for consistency
-    // However, sensitive data should still use withCredentials as you correctly do.
+    // Your environment variables are good.
     environment {
-        // Define common variables needed by your tests to connect to the DB
         DB_HOST = 'localhost' // If tests run on Jenkins agent and connect via mapped port
         DB_PORT = '5432'
-        DB_NAME = 'test_database' // From your docker-compose.yml
+        DB_NAME = 'test_database'
     }
 
     stages {
         stage('Prepare Agent Environment') {
             steps {
-                script { // 'script' block allows execution of shell commands
-                    // Update package lists and install python3 and venv module
-                    echo "Updating package lists and installing Python dependencies..."
-                    sh 'apt-get update'
-                    sh 'apt-get install -y python3 python3-venv'
+                script {
+                    echo "Ensuring Python and venv are installed..."
+                    // On a clean 'ubuntu:latest' image, you still need to install these.
+                    // No 'sudo' needed here, as we are running as root inside this temporary container.
+                    sh 'apt-get update && apt-get install -y python3 python3-venv libpq-dev curl gnupg'
 
-                    // Create and activate a virtual environment
                     echo "Creating and activating virtual environment..."
                     sh 'python3 -m venv venv_jenkins'
-                    sh '. venv_jenkins/bin/activate' // Using '.' for POSIX compatibility
+                    sh '. venv_jenkins/bin/activate'
 
-                    // Install Python dependencies (including requests and allure-pytest)
-                    echo "Installing Python project dependencies"
-                    sh 'venv_jenkins/bin/pip install -r requirements.txt' // psycopg2-binary is easier to install
+                    echo "Installing Python project dependencies including psycopg2-binary..."
+                    sh 'venv_jenkins/bin/pip install -r requirements.txt psycopg2-binary'
 
-                    // Install Playwright browser binaries and dependencies
                     echo "Installing Playwright browser binaries and dependencies..."
+                    // Note: If you use Playwright's own Docker images, these steps are often unnecessary.
                     sh 'venv_jenkins/bin/playwright install'
-                    sh 'venv_jenkins/bin/playwright install-deps' // Ensure system dependencies are also installed
-
-                    // Run your Pytest tests and generate Allure results
-                    // The '.' means "discover tests in the current directory (Test_Scripts)"
-                    // sh 'venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py'
-
-                    echo "Installing Docker and Docker Compose..."
-                    // Install prerequisites for Docker
-                    sh 'sudo apt-get install -y ca-certificates curl gnupg'
-                    // Add Docker's official GPG key
-                    sh 'sudo install -m 0755 -d /etc/apt/keyrings'
-                    sh 'curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg'
-                    sh 'sudo chmod a+r /etc/apt/keyrings/docker.gpg'
-                    // Add the Docker repository to Apt sources
-                    sh 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null'
-                    sh 'sudo apt-get update'
-                    // Install Docker Engine, containerd, and Docker Compose (cli plugin)
-                    sh 'sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'
-
-                    // --- IMPORTANT: Add Jenkins user to the 'docker' group ---
-                    // This allows Jenkins to run Docker commands without 'sudo'
-                    echo "Adding Jenkins user to docker group (requires agent restart to take effect fully)..."
-                    sh 'sudo usermod -aG docker jenkins || true' // '|| true' makes it not fail if user isn't 'jenkins' or already in group
-
+                    sh 'venv_jenkins/bin/playwright install-deps'
                 }
             }
         }
@@ -64,30 +53,26 @@ pipeline {
             steps {
                 script {
                     echo "Starting Docker Compose services in detached mode..."
-                    // Ensure docker-compose.yml is in the workspace root
-                    // --build will rebuild images if changes detected (useful for 'my_api' if you add one)
+                    // 'docker' command should now be available because of the socket/binary mount
                     sh 'docker compose up -d --build'
 
-                    // --- CRUCIAL: Waiting for Database to be Ready ---
                     echo "Waiting for test_db service to be ready..."
-                    // We'll use your existing MY_DUMMY_USER_PASS credential for this check
                     withCredentials([usernamePassword(credentialsId: 'MY_DUMMY_USER_PASS', usernameVariable: 'DB_USER_VAR', passwordVariable: 'DB_PASS_VAR')]) {
                         sh '''
-                            # Run Python script inside the virtual environment
                             venv_jenkins/bin/python -c "
 import psycopg2
 import time
 import os
 
-DB_HOST = os.getenv('DB_HOST') # Get from Jenkins environment block
+DB_HOST = os.getenv('DB_HOST')
 DB_PORT = os.getenv('DB_PORT')
 DB_NAME = os.getenv('DB_NAME')
-DB_USER = os.getenv('DB_USER_VAR') # From Jenkins credentials
-DB_PASS = os.getenv('DB_PASS_VAR') # From Jenkins credentials
+DB_USER = os.getenv('DB_USER_VAR')
+DB_PASS = os.getenv('DB_PASS_VAR')
 
 print(f'Attempting to connect to DB at {DB_HOST}:{DB_PORT}/{DB_NAME} with user {DB_USER}')
 
-for i in range(20): # Increased attempts for more robustness on CI
+for i in range(20):
     try:
         conn = psycopg2.connect(host=DB_HOST, port=DB_PORT, user=DB_USER, password=DB_PASS, dbname=DB_NAME)
         conn.close()
@@ -105,16 +90,11 @@ else:
             }
         }
 
-        stage('Run Automated Tests') { // Renamed for clarity
+        stage('Run Automated Tests') {
             steps {
                 script {
                     echo "Running Pytest tests against the containerized services..."
-                    // Your tests now connect to the services exposed by Docker Compose
-                    // Ensure your Python API tests use the DB_HOST, DB_PORT, DB_NAME
-                    // and your credentials (DB_USER_VAR, DB_PASS_VAR) to connect to the DB.
                     withCredentials([usernamePassword(credentialsId: 'MY_DUMMY_USER_PASS', usernameVariable: 'DB_USER_FOR_TESTS', passwordVariable: 'DB_PASS_FOR_TESTS')]) {
-                        // Pass DB credentials to your test run as environment variables.
-                        // Your Python tests can then pick these up using os.getenv().
                         sh '''
                             export DB_HOST=${DB_HOST}
                             export DB_PORT=${DB_PORT}
@@ -131,13 +111,10 @@ else:
 
         stage('Publish Allure Report') {
             steps {
-                // The allure plugin provides this step directly.
-                // The path is relative to the Jenkins workspace root.
-                // If 'cd Test_Scripts' was used above, the results will be in Test_Scripts/allure-results.
                 allure([
-                    reportBuildPolicy: 'ALWAYS', // Always generate report
+                    reportBuildPolicy: 'ALWAYS',
                     results: [
-                        [path: 'allure-results'] // Path to allure-results folder
+                        [path: 'allure-results']
                     ]
                 ])
             }
@@ -146,27 +123,20 @@ else:
         stage('Use Secret Credentials') {
             steps {
                 script {
-                    // --- Using Secret Text Credential ---
-                    // 'string' type for Secret Text
                     withCredentials([string(credentialsId: 'MY_DUMMY_API_TOKEN', variable: 'API_TOKEN_VAR')]) {
                         sh '''
                         echo "Attempting to use API Token..."
-                        # NEVER print the raw variable directly in production: echo "API_TOKEN_VAR: $API_TOKEN_VAR"
-                        # Simulate usage, Jenkins will mask it if the value is detected:
-                        echo "API_Token_Start: ${API_TOKEN_VAR}" # This will be masked in logs
+                        echo "API_Token_Start: ${API_TOKEN_VAR}"
                         echo "curl -H \\"Authorization: Bearer ${API_TOKEN_VAR}\\" https://api.example.com/data"
                         echo "API_Token_End: ${API_TOKEN_VAR}"
                         '''
                     }
 
-                    // --- Using Username with Password Credential ---
-                    // 'usernamePassword' type for Username with Password
                     withCredentials([usernamePassword(credentialsId: 'MY_DUMMY_USER_PASS', usernameVariable: 'DB_USER', passwordVariable: 'DB_PASS')]) {
                         sh '''
                         echo "Attempting to connect to Database..."
-                        # Access username as $DB_USER and password as $DB_PASS
-                        echo "DB_User_Start: ${DB_USER}" # This will be masked in logs
-                        echo "DB_Pass_Start: ${DB_PASS}" # This will be masked in logs
+                        echo "DB_User_Start: ${DB_USER}"
+                        echo "DB_Pass_Start: ${DB_PASS}"
                         echo "mysql -u ${DB_USER} -p${DB_PASS} database_name"
                         echo "DB_User_End: ${DB_USER}"
                         echo "DB_Pass_End: ${DB_PASS}"
@@ -179,22 +149,18 @@ else:
 
     post {
         always {
-            // All actions (steps) go directly into the 'always' block
-            // or wrapped in a 'script { ... }' block if they are Groovy commands.
-            steps { // You need a 'steps' block directly inside 'always'
+            steps {
                 echo "Tearing down Docker Compose services..."
-                sh 'docker compose down' // Stop and remove containers, networks
+                sh 'docker compose down'
 
                 echo "Cleaning up virtual environment..."
-                sh 'rm -rf venv_jenkins' // Still clean up virtual environment
+                sh 'rm -rf venv_jenkins'
             }
         }
         failure {
-            // Steps to run only if the pipeline fails
             echo 'Pipeline failed! Check console output for details.'
         }
         success {
-            // Steps to run only if the pipeline succeeds
             echo 'Pipeline succeeded!'
         }
     }
