@@ -5,3 +5,4 @@ requests
 allure-pytest
 pytest-rerunfailures
 jsonschema
+psycopg2-binary

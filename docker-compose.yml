@@ -1,0 +1,36 @@
+# docker-compose.yml
+
+services:
+  # Service for our PostgreSQL database
+  test_db:
+    image: postgres:13-alpine # Use a lightweight PostgreSQL image
+    ports:
+      - "5432:5432" # Map host port 5432 to container port 5432
+    environment: # Environment variables for PostgreSQL
+      POSTGRES_DB: test_database # Name of the database
+      POSTGRES_USER: test_user   # Database user
+      POSTGRES_PASSWORD: test_password # Database password
+    volumes:
+      # Optional: persist data, or run init scripts
+      # - ./db_data:/var/lib/postgresql/data # Persist data for local dev
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql # Run SQL script on startup
+
+  # (Optional) If you had a backend API application to test, it would go here:
+  # my_api:
+  #   build: . # Or image: your_api_image
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on: # Ensure DB starts before API
+  #     - test_db
+  #   environment:
+  #     DATABASE_URL: postgres://test_user:test_password@test_db:5432/test_database # How API connects to DB
+
+    # Playwright browser service
+    playwright_browser:
+      image: mcr.microsoft.com/playwright/python:v1.44-focal # Use an official Playwright image
+      ports:
+        - "4444:4444" # Expose Playwright's default port if needed for remote connection
+      # Or, if Playwright tests run INSIDE a container:
+      # command: /bin/bash # Keep container running for debugging
+      # environment:
+      #   PWDEBUG: 1 # Enable Playwright debug mode
