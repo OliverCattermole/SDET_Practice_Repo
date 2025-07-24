@@ -160,14 +160,14 @@ else:
 
     post {
         always {
-            stage('Teardown Environment and Cleanup') { // Combined for clarity
-                steps {
-                    echo "Tearing down Docker Compose services..."
-                    sh 'docker compose down' // Stop and remove containers, networks
+            // All actions (steps) go directly into the 'always' block
+            // or wrapped in a 'script { ... }' block if they are Groovy commands.
+            steps { // You need a 'steps' block directly inside 'always'
+                echo "Tearing down Docker Compose services..."
+                sh 'docker compose down' // Stop and remove containers, networks
 
-                    echo "Cleaning up virtual environment..."
-                    sh 'rm -rf venv_jenkins' // Still clean up virtual environment
-                }
+                echo "Cleaning up virtual environment..."
+                sh 'rm -rf venv_jenkins' // Still clean up virtual environment
             }
         }
         failure {
