@@ -1,26 +1,18 @@
-// Jenkinsfile (Adapted for Docker-from-Docker on the Jenkins Agent)
+// Jenkinsfile (Updated with jenkins/jnlp-agent-docker image)
 pipeline {
     agent {
         docker {
-            // Use an image that has the Docker CLI installed.
-            // 'jenkins/jnlp-agent-docker' is a good choice if available,
-            // or even a simple 'ubuntu:latest' and then mount the docker binary/socket.
-            // A common pattern is to use an image that already includes many build tools,
-            // or to build your own custom agent image.
-            // For simplicity, let's use a standard Linux image and manually prepare it
-            // by mounting what's needed.
-            // A more direct option if you are using Docker Engine as agent's host:
-            image 'ubuntu:latest' // Or 'python:3.10-slim-bookworm' if you prefer Python already there
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker'
-            // The above args are critical: they map the host's docker socket and binary into the agent container.
-            // This means the 'docker' command inside the agent talks to the host's Docker daemon.
-            // For a more robust setup, you might use 'jenkins/jnlp-agent-docker' or build your own.
+            // Use the agent image that comes with the Docker CLI pre-installed
+            image 'jenkins/jnlp-agent-docker'
+            // Only mount the Docker socket from the host.
+            // The 'docker' binary is already inside the 'jenkins/jnlp-agent-docker' image.
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     // Your environment variables are good.
     environment {
-        DB_HOST = 'localhost' // If tests run on Jenkins agent and connect via mapped port
+        DB_HOST = 'localhost'
         DB_PORT = '5432'
         DB_NAME = 'test_database'
     }
@@ -29,10 +21,12 @@ pipeline {
         stage('Prepare Agent Environment') {
             steps {
                 script {
-                    echo "Ensuring Python and venv are installed..."
-                    // On a clean 'ubuntu:latest' image, you still need to install these.
-                    // No 'sudo' needed here, as we are running as root inside this temporary container.
-                    sh 'apt-get update && apt-get install -y python3 python3-venv libpq-dev curl gnupg'
+                    echo "Updating package lists and installing Python dependencies..."
+                    // 'jenkins/jnlp-agent-docker' is based on Debian/Ubuntu, so apt-get works.
+                    // It already has curl, gnupg, etc., and the Docker CLI.
+                    // We only need to install Python-related tools and libpq-dev for psycopg2.
+                    sh 'apt-get update'
+                    sh 'apt-get install -y python3 python3-venv libpq-dev'
 
                     echo "Creating and activating virtual environment..."
                     sh 'python3 -m venv venv_jenkins'
@@ -42,19 +36,21 @@ pipeline {
                     sh 'venv_jenkins/bin/pip install -r requirements.txt psycopg2-binary'
 
                     echo "Installing Playwright browser binaries and dependencies..."
-                    // Note: If you use Playwright's own Docker images, these steps are often unnecessary.
+                    // These are still needed unless you switch to Playwright's own Docker browser images.
                     sh 'venv_jenkins/bin/playwright install'
                     sh 'venv_jenkins/bin/playwright install-deps'
                 }
             }
         }
 
+        // ... Rest of your stages (Setup Containerized Test Environment, Run Automated Tests, etc.)
+        //    remain the same as they use 'docker compose' which will now be found.
+
         stage('Setup Containerized Test Environment') {
             steps {
                 script {
                     echo "Starting Docker Compose services in detached mode..."
-                    // 'docker' command should now be available because of the socket/binary mount
-                    sh 'docker compose up -d --build'
+                    sh 'docker compose up -d --build' # This should now work!
 
                     echo "Waiting for test_db service to be ready..."
                     withCredentials([usernamePassword(credentialsId: 'MY_DUMMY_USER_PASS', usernameVariable: 'DB_USER_VAR', passwordVariable: 'DB_PASS_VAR')]) {
