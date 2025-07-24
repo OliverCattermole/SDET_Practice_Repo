@@ -37,6 +37,25 @@ pipeline {
                     // Run your Pytest tests and generate Allure results
                     // The '.' means "discover tests in the current directory (Test_Scripts)"
                     // sh 'venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py'
+
+                    echo "Installing Docker and Docker Compose..."
+                    // Install prerequisites for Docker
+                    sh 'sudo apt-get install -y ca-certificates curl gnupg'
+                    // Add Docker's official GPG key
+                    sh 'sudo install -m 0755 -d /etc/apt/keyrings'
+                    sh 'curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg'
+                    sh 'sudo chmod a+r /etc/apt/keyrings/docker.gpg'
+                    // Add the Docker repository to Apt sources
+                    sh 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null'
+                    sh 'sudo apt-get update'
+                    // Install Docker Engine, containerd, and Docker Compose (cli plugin)
+                    sh 'sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'
+
+                    // --- IMPORTANT: Add Jenkins user to the 'docker' group ---
+                    // This allows Jenkins to run Docker commands without 'sudo'
+                    echo "Adding Jenkins user to docker group (requires agent restart to take effect fully)..."
+                    sh 'sudo usermod -aG docker jenkins || true' // '|| true' makes it not fail if user isn't 'jenkins' or already in group
+
                 }
             }
         }
