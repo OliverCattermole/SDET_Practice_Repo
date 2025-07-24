@@ -11,7 +11,7 @@ class LoginPage(BasePage):  # Inherit from BasePage
         self.password_input = page.locator("[data-test=\"password\"]")
         self.login_button = page.locator("#login-button")
         self.error_message = page.locator("[data-test=\"error\"]")
-       # self.inventory_page_title = page.locator(".title")  # Locator for success page title
+        self.inventory_page_title = page.locator(".title")  # Locator for success page title
 
     def navigate(self):
         """Navigates to the login page using the BasePage's goto method."""
