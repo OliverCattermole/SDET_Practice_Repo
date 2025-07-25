@@ -11,7 +11,7 @@ class LoginPage(BasePage):  # Inherit from BasePage
         self.password_input = page.locator("[data-test=\"password\"]")
         self.login_button = page.locator("#login-button")
         self.error_message = page.locator("[data-test=\"error\"]")
-        #self.inventory_page_title = page.locator(".title")  # Locator for success page title
+        self.page_title = page.locator(".title")  # Locator for success page title
 
     def navigate(self):
         """Navigates to the login page using the BasePage's goto method."""
@@ -54,7 +54,6 @@ class LoginPage(BasePage):  # Inherit from BasePage
         self.login(username, password)
         # Assert that URL changes AND a specific element on the next page is visible
         expect(self.page).to_have_url("https://www.saucedemo.com/inventory.html")
-        expect(self.get_page_title).to_have_text("Products")
-        #expect(self.inventory_page_title).to_have_text(
-            #"Products")  # Explicitly wait for the title element to be correct
+        expect(self.page_title).to_have_text(
+            "Products")  # Explicitly wait for the title element to be correct
         # No return needed, just assertions for successful login flow
