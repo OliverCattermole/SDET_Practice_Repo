@@ -10,6 +10,7 @@ class BasePage:
         self.page = page
         # Example of a common locator if all pages had one:
         # self.header_title = page.locator("h1.header")
+        self.page_title = page.locator(".title")  # Locator for success page title
 
     def goto(self, url: str):
         """Navigates to a specific URL."""
