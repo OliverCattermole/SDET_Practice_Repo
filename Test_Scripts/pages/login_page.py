@@ -1,6 +1,6 @@
 from playwright.sync_api import Page, expect
 from pages.base_page import BasePage # Import the new BasePage
-#from pages.inventory_page import InventoryPage # Import the new InventoryPage
+from pages.inventory_page import InventoryPage # Import the new InventoryPage
 
 class LoginPage(BasePage):  # Inherit from BasePage
     def __init__(self, page: Page):
