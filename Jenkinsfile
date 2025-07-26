@@ -12,30 +12,46 @@ pipeline {
     //}
 
     stages {
-        stage('Setup Environment and Run Tests') {
+        stage('Setup Environment') {
             steps {
-                script { // 'script' block allows execution of shell commands
-                    // Update package lists and install python3 and venv module
+                script {
                     echo "Updating package lists and installing Python dependencies..."
                     sh 'apt-get update'
                     sh 'apt-get install -y python3 python3-venv'
 
-                    // Create and activate a virtual environment
                     echo "Creating and activating virtual environment..."
                     sh 'python3 -m venv venv_jenkins'
-                    sh '. venv_jenkins/bin/activate' // Using '.' for POSIX compatibility
+                    sh '. venv_jenkins/bin/activate'
 
-                    // Install Python dependencies (including requests and allure-pytest)
-                    echo "Installing Python project dependencies"
+                    echo "Installing Python project dependencies (including flake8)..."
                     sh 'venv_jenkins/bin/pip install -r requirements.txt'
 
-                    // Install Playwright browser binaries and dependencies
                     echo "Installing Playwright browser binaries and dependencies..."
                     sh 'venv_jenkins/bin/playwright install'
-                    sh 'venv_jenkins/bin/playwright install-deps' // Ensure system dependencies are also installed
+                    sh 'venv_jenkins/bin/playwright install-deps'
+                }
+            }
+        }
 
-                    // Run your Pytest tests and generate Allure results
-                    // The '.' means "discover tests in the current directory (Test_Scripts)"
+        stage('Code Quality Check') {
+            steps {
+                script {
+                    echo "Running Flake8 code quality checks..."
+                    // Run flake8 on Test_Scripts directory
+                    // --show-source: shows the line of code causing the warning
+                    // --statistics: shows counts for each type of warning/error
+                    // || true: This makes the step not fail the build immediately if linting issues are found.
+                    //         Remove '|| true' if you want linting errors to FAIL the build.
+                    sh 'venv_jenkins/bin/flake8 Test_Scripts/ --show-source --statistics || true'
+                    echo "Flake8 check complete."
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo "Running Pytest tests..."
                     sh 'venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py'
                 }
             }

@@ -6,3 +6,4 @@ allure-pytest
 pytest-rerunfailures
 jsonschema
 psycopg2-binary
+flake8
