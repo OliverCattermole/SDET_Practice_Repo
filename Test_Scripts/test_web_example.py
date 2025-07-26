@@ -32,8 +32,8 @@ def test_search_on_google(page: Page):
     page.get_by_role("button", name="Accept all").click()
 
     search_box = page.get_by_role("combobox", name="Search")
-    search_box.fill("Playwright testing Python") # Type text into the field
-    search_box.press("Enter") # Simulate pressing Enter
+    search_box.fill("Playwright testing Python")  # Type text into the field
+    search_box.press("Enter")  # Simulate pressing Enter
 
     # Verify that the search results page title contains the search term
     # Commented out because we actually reach a page that tries to confirm we are not a robot lol
@@ -73,10 +73,10 @@ def test_invalid_login_scenario_with_page_object(page: Page):
     """
     Simulates an invalid login and asserts an error message using POM.
     """
-    login_page = LoginPage(page) # Instantiate the Page Object, passing the Playwright page fixture
+    login_page = LoginPage(page)  # Instantiate the Page Object, passing the Playwright page fixture
 
-    login_page.navigate() # Use the Page Object's navigation method
-    login_page.login("invalid_user", "wrong_password") # User the Page Object's login method
+    login_page.navigate()  # Use the Page Object's navigation method
+    login_page.login("invalid_user", "wrong_password")  # User the Page Object's login method
 
     expect(login_page.error_message).to_have_text("Epic sadface: Username and password do not match any user in this service")
     print("\nInvalid login error message verified.")
@@ -84,13 +84,14 @@ def test_invalid_login_scenario_with_page_object(page: Page):
 
 # Robust method
 
-def test_successful_login_scenario(page: Page): # Assuming you have a successful login test
+
+def test_successful_login_scenario(page: Page):  # Assuming you have a successful login test
     """
     Simulates a successful login and asserts navigation using POM with explicit waits.
     """
     login_page = LoginPage(page)
     login_page.navigate()
-    login_page.login_and_expect_success("standard_user", "secret_sauce") # Uses the new robust method
+    login_page.login_and_expect_success("standard_user", "secret_sauce")  # Uses the new robust method
     print("\nSuccessful login verified using robust Page Object Model.")
     page.screenshot(path="successful_login_pom.png")
 
@@ -123,7 +124,7 @@ def test_mock_api_response(page: Page):
     Mocks an API response to test a UI component's behaviour without needing a real backend
     """
     # Define a clear, absolute URL for your mock
-    mock_url = "http://localhost:8000/api/data" # Or any consistent, absolute URL you prefer
+    mock_url = "http://localhost:8000/api/data"  # Or any consistent, absolute URL you prefer
 
     # Intercept this specific absolute URL
     page.route(mock_url, lambda route: route.fulfill(
@@ -135,10 +136,10 @@ def test_mock_api_response(page: Page):
     # Now, make the fetch request to the absolute URL
     # Playwright will return our mocked response instead of trying to hit the real server.
     page.goto(f"data:text/html,<script>"
-              f"fetch('{mock_url}')" # Use the absolute URL here
+              f"fetch('{mock_url}')"  # Use the absolute URL here
               f".then(r=>r.json())"
               f".then(j=>document.body.textContent=j.message)"
-              f".catch(e=>document.body.textContent='Error: ' + e.message)" # Added error handling for clarity
+              f".catch(e=>document.body.textContent='Error: ' + e.message)"  # Added error handling for clarity
               f"</script>")
 
     # Assert that the mocked data is displayed on the page

@@ -1,5 +1,6 @@
 from playwright.sync_api import Page, expect
 
+
 class BasePage:
     """
        A base class for all Page Objects, providing common functionalities

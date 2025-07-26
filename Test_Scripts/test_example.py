@@ -1,6 +1,7 @@
 # test_example.py
 import pytest
 
+
 @pytest.mark.parametrize("num1, num2, expected_sum", [
     (1, 2, 3),
     (-1, 5, 4),
@@ -15,6 +16,7 @@ def test_add_function_parametrized(num1, num2, expected_sum):
     result = add(num1, num2)  # Using the 'add' function defined previously
     assert result == expected_sum
 
+
 # You can even parametrize a fixture! (More advanced, but good to see)
 @pytest.fixture(params=[
     ("user_a", "pass_a"),
@@ -26,6 +28,7 @@ def parameterized_user(request):
     print(f"\n--- Setting up parameterized user: {username} ---")
     yield {"username": username, "password": password}
     print(f"--- Cleaning up parameterized user: {username} ---")
+
 
 def test_login_with_different_users(parameterized_user):
     """
@@ -85,6 +88,7 @@ def test_login_with_fixture(setup_data):
     assert setup_data["username"] == "testuser"
     assert setup_data["password"] == "password123"
     print("Login successful (simulated).")
+
 
 def test_another_test_with_fixture(setup_data):
     """Another test demonstrating fixture reuse."""

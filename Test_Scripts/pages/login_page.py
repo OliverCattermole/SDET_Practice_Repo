@@ -1,6 +1,7 @@
 from playwright.sync_api import Page, expect
-from pages.base_page import BasePage # Import the new BasePage
-from pages.inventory_page import InventoryPage # Import the new InventoryPage
+from pages.base_page import BasePage  # Import the new BasePage
+from pages.inventory_page import InventoryPage  # Import the new InventoryPage
+
 
 class LoginPage(BasePage):  # Inherit from BasePage
     def __init__(self, page: Page):
@@ -11,7 +12,7 @@ class LoginPage(BasePage):  # Inherit from BasePage
         self.password_input = page.locator("[data-test=\"password\"]")
         self.login_button = page.locator("#login-button")
         self.error_message = page.locator("[data-test=\"error\"]")
-        #self.page_title = page.locator(".title")  # Locator for success page title
+        # self.page_title = page.locator(".title")  # Locator for success page title
 
     def navigate(self):
         """Navigates to the login page using the BasePage's goto method."""

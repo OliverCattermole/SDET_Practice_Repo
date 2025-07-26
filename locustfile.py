@@ -1,6 +1,7 @@
 from locust import HttpUser, task, between
 import random
 
+
 class MyUser(HttpUser):
     """
     This is the user class that will be simulated by Locust.
@@ -23,7 +24,7 @@ class MyUser(HttpUser):
         The @task decorator marks this method as a task that Locust users will execute.
         'self.client' is a requests.Session object, allowing you to make HTTP requests.
         """
-        self.client.get("/posts/1", name="/posts/[id]") # 'name' groups requests in stats
+        self.client.get("/posts/1", name="/posts/[id]")  # 'name' groups requests in stats
 
     @task(weight=2)
     def get_all_users(self):

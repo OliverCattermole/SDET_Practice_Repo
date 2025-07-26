@@ -1,9 +1,10 @@
 # test_api_example.py
 import pytest
 import requests
-BASE_URL = "https://jsonplaceholder.typicode.com"  # A public API for mock data
 import json
 from jsonschema import validate, ValidationError
+BASE_URL = "https://jsonplaceholder.typicode.com"  # A public API for mock data
+
 
 def test_get_all_posts():
     """
@@ -12,9 +13,10 @@ def test_get_all_posts():
     """
     response = requests.get(f"{BASE_URL}/posts")
     assert response.status_code == 200
-    assert isinstance(response.json(), list) # Ensure it's a list
-    assert len(response.json()) > 0 # Ensure it's not empty
+    assert isinstance(response.json(), list)  # Ensure it's a list
+    assert len(response.json()) > 0  # Ensure it's not empty
     print(f"\nGET all posts successful. Found {len(response.json())} posts.")
+
 
 def test_get_single_post():
     """
@@ -32,10 +34,11 @@ def test_get_single_post():
 
 # A couple of data Driven API tests
 
+
 @pytest.mark.parametrize("post_id, expected_title_contains", [
     (1, "sunt aut facere"),  # Valid post 1
-    (10, "optio molestias id quia eum"), # Valid post 10
-    (100, "at nam consequatur"), # Valid post 100
+    (10, "optio molestias id quia eum"),  # Valid post 10
+    (100, "at nam consequatur"),  # Valid post 100
     (999999, None)  # Non-existent post (we'll adapt the test for this)
 ])
 def test_get_single_post_data_driven(post_id, expected_title_contains):
@@ -56,10 +59,11 @@ def test_get_single_post_data_driven(post_id, expected_title_contains):
         assert response.status_code == 404
         print(f"GET non-existent post ID {post_id} returned 404 as expected.")
 
+
 @pytest.mark.parametrize("test_case_name, payload, expected_status_code", [
     ("Valid Post Creation", {"title": "Test Title 1", "body": "Test Body 1", "userId": 1}, 201),
     ("Another Valid Post", {"title": "Another Title", "body": "Another Body", "userId": 2}, 201),
-    ("Post with Missing Body", {"title": "No Body Post", "userId": 3}, 201), # JSONPlaceholder often still accepts this
+    ("Post with Missing Body", {"title": "No Body Post", "userId": 3}, 201),  # JSONPlaceholder often still accepts this
     ("Post with Extra Field", {"title": "Extra Field", "body": "Data", "extra_field": "value", "userId": 4}, 201)
     # JSONPlaceholder is very forgiving; a real API would likely return 400 for invalid payloads
 ])
@@ -76,7 +80,7 @@ def test_create_post_data_driven(test_case_name, payload, expected_status_code):
         # Assert that the received data matches the sent payload (or a subset)
         for key, value in payload.items():
             assert response_json.get(key) == value
-        assert "id" in response_json # Ensure an ID was assigned
+        assert "id" in response_json  # Ensure an ID was assigned
         print(f"Post created successfully with ID: {response_json.get('id')}. Title: {response_json.get('title')}.")
     else:
         print(f"Post creation failed as expected with status code: {response.status_code}.")
@@ -93,12 +97,13 @@ def test_create_new_post():
         "userId": 1
     }
     response = requests.post(f"{BASE_URL}/posts", json=new_post_data)
-    assert response.status_code == 201 # 201 Created
+    assert response.status_code == 201  # 201 Created
     response_json = response.json()
     assert response_json["title"] == new_post_data["title"]
     assert response_json["body"] == new_post_data["body"]
-    assert "id" in response_json # New post should have an ID
+    assert "id" in response_json  # New post should have an ID
     print(f"POST new post successful. New ID: {response_json['id']}")
+
 
 def test_update_existing_post():
     """
@@ -120,35 +125,40 @@ def test_update_existing_post():
     assert response_json["id"] == post_id
     print(f"PUT update post (ID {post_id}) successful. New Title: {response_json['title']}")
 
+
 def test_delete_post():
     """
     Tests deleting a post using DELETE request.
     Expected: Status code 200 (OK), and typically an empty response or confirmation.
     """
-    post_id = 1 # We're deleting a mock post, so it won't actually disappear from the service
+    post_id = 1  # We're deleting a mock post, so it won't actually disappear from the service
     response = requests.delete(f"{BASE_URL}/posts/{post_id}")
     assert response.status_code == 200
     print(f"DELETE post (ID {post_id}) successful.")
+
 
 def test_get_non_existent_post():
     """
     Tests retrieving a non-existent post.
     Expected: Status code 404 (Not Found).
     """
-    post_id = 999999 # A very high ID to ensure it doesn't exist
+    post_id = 999999  # A very high ID to ensure it doesn't exist
     response = requests.get(f"{BASE_URL}/posts/{post_id}")
     assert response.status_code == 404
     print(f"GET non-existent post (ID {post_id}) returned 404 as expected.")
 
 # JSON Schema related tests
 
+
 def load_json_schema(filename):
     """Loads a JSON schema from the 'schemas' directory."""
-    filepath = f"Test_Scripts/schemas/{filename}" # Adjust path if your schemas folder is elsewhere
+    filepath = f"Test_Scripts/schemas/{filename}"  # Adjust path if your schemas folder is elsewhere
     with open(filepath, 'r') as file:
         return json.load(file)
 
+
 POST_SCHEMA = load_json_schema("post_schema.json")
+
 
 def test_get_single_post_schema_validation():
     """
@@ -167,17 +177,19 @@ def test_get_single_post_schema_validation():
 
 # Optional: Test with an invalid schema (if you can simulate one)
 # This example will fail on purpose to show validation errors
+
+
 def test_invalid_post_schema_validation_example():
     """
     Demonstrates schema validation failure with an invalid response structure.
     This test is expected to fail.
     """
     invalid_data = {
-        "userId": "1", # Should be integer, not string
+        "userId": "1",  # Should be integer, not string
         "id": 1,
         "title": "A valid title",
         "body": "A valid body",
-        "extraField": "unexpected value" # additionalProperties: false should catch this
+        "extraField": "unexpected value"  # additionalProperties: false should catch this
     }
     # For demonstration, we'll try to validate this incorrect data against our schema
     # In a real test, you'd be getting this from an API call that returned bad data
@@ -191,4 +203,3 @@ def test_invalid_post_schema_validation_example():
         assert "is not of type 'integer'" in e.message or "'extraField' was unexpected" in e.message
         assert (e.path and e.path[0] == "userId") or e.validator == "additionalProperties"
         print("Expected schema validation error caught successfully.")
-

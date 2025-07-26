@@ -2,6 +2,7 @@
 from playwright.sync_api import Page, Locator
 from pages.base_page import BasePage
 
+
 class InventoryPage(BasePage):
     """
     Page Object for the inventory/products page after successful login.
@@ -19,7 +20,7 @@ class InventoryPage(BasePage):
 
     def get_products_title_text(self) -> str:
         """Returns the text content of the 'Products' title."""
-        expect(self.products_title).to_be_visible() # Ensure it's visible before getting text
+        expect(self.products_title).to_be_visible()  # Ensure it's visible before getting text
         return self.products_title.text_content()
 
     # Add methods for actions on this page, e.g., add_item_to_cart, view_cart
