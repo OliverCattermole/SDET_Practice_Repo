@@ -5,7 +5,7 @@ import os  # Import the os module to access environment variables
 import json
 from jsonschema import validate, ValidationError
 # Read BASE_URL from an environment variable, with a fallback for local execution
-BASE_URL = os.getenv("API_BASE_URL")  # A public API for mock data
+BASE_URL = os.getenv("API_BASE_URL", "https://jsonplaceholder.typicode.com")  # A public API for mock data
 # If API_BASE_URL is not set, it will default to jsonplaceholder.typicode.com
 
 
