@@ -4,12 +4,13 @@ pipeline {
 
     // It's good practice to define environment variables for consistency
     // However, sensitive data should still use withCredentials as you correctly do.
-    //environment {
+    environment {
         // Define common variables needed by your tests to connect to the DB
         //DB_HOST = 'localhost' // If tests run on Jenkins agent and connect via mapped port
         //DB_PORT = '5432'
         //DB_NAME = 'test_database' // From your docker-compose.yml
-    //}
+        API_BASE_URL = 'https://jsonplaceholder.typicode.com' // Define the base URL here
+    }
 
     stages {
         stage('Setup Environment') {
@@ -52,7 +53,10 @@ pipeline {
             steps {
                 script {
                     echo "Running Pytest tests..."
-                    sh 'venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py'
+                    sh '''
+                        export API_BASE_URL="${API_BASE_URL}"
+                        venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py
+                    '''
                 }
             }
         }
