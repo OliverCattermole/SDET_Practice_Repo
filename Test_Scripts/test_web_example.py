@@ -31,7 +31,9 @@ def test_search_on_google(page: Page):
     # Find the search input field by its placeholder text
     page.get_by_role("button", name="Accept all").click()
 
-    search_box = page.get_by_role("combobox", name="Search")
+    #search_box = page.get_by_role("combobox", name="Search")
+    # using title locator
+    search_box = page.get_by_title("Search")
     search_box.fill("Playwright testing Python")  # Type text into the field
     search_box.press("Enter")  # Simulate pressing Enter
 
@@ -54,10 +56,15 @@ def test_invalid_login_scenario(page: Page):
     """
     page.goto("https://www.saucedemo.com/")
 
-    # Locate and fill username field
-    page.locator("#user-name").fill("invalid_user")
-    # Locate and fill password field
-    page.locator("[data-test=\"password\"]").fill("wrong_password")
+    # # Locate and fill username field
+    # page.locator("#user-name").fill("invalid_user")
+    # # Locate and fill password field
+    # page.locator("[data-test=\"password\"]").fill("wrong_password")
+
+    # Using different locators
+    page.locator('id=user-name').fill("invalid_user")
+    page.locator("id=password").fill("wrong_password")
+
 
     # Locate and click the login button by text or CSS selector
     page.locator("#login-button").click()
@@ -180,3 +187,23 @@ def test_block_image_request(page: Page):
 #     assert image_regression(screenshot_bytes, threshold=0.5) # Using 0.5 as a default threshold, adjust as needed
 #
 #     print("\nSaucedemo login page visual test executed.")
+
+
+@pytest.mark.parametrize("username, password, expected_outcome", [
+    ("standard_user", "secret_sauce", "success"),
+    ("locked_out_user", "secret_sauce", "error"),
+    ("invalid_user", "wrong_password", "error")
+])
+def test_login_scenarios(page: Page, username, password, expected_outcome):
+    login_page = LoginPage(page)
+    login_page.navigate()
+    login_page.login(username, password)
+
+    if expected_outcome == "success":
+        expect(page).to_have_url("https://www.saucedemo.com/inventory.html")
+    else:
+        expect(login_page.error_message).to_be_visible()
+        expect(login_page.error_message).to_contain_text(
+            "Epic sadface")
+
+    print(f"Login for user '{username}' tested with expected outcome: {expected_outcome}")

@@ -1,6 +1,7 @@
 from playwright.sync_api import Page, expect
 from pages.base_page import BasePage  # Import the new BasePage
 from pages.inventory_page import InventoryPage  # Import the new InventoryPage
+import config
 
 
 class LoginPage(BasePage):  # Inherit from BasePage
@@ -16,7 +17,7 @@ class LoginPage(BasePage):  # Inherit from BasePage
 
     def navigate(self):
         """Navigates to the login page using the BasePage's goto method."""
-        self.goto("https://www.saucedemo.com/")  # Use the inherited goto method
+        self.goto(config.BASE_URL)  # Use the inherited goto method
         # Ensure the login button is visible before attempting interaction
         expect(self.login_button).to_be_visible()
 
@@ -34,7 +35,8 @@ class LoginPage(BasePage):  # Inherit from BasePage
         self.login(username, password)
         # Use Playwright's expect to wait for the URL change or element presence,
         # ensuring the page loaded correctly before returning the new Page Object.
-        expect(self.page).to_have_url("https://www.saucedemo.com/inventory.html")
+        # expect(self.page).to_have_url("https://www.saucedemo.com/inventory.html")
+        expect(self.page).to_have_url(config.BASE_URL + "inventory.html")
         # The next assertion about the title (or any specific element) should
         # be done on the InventoryPage object itself, or directly in the test.
         # Here we verify the page navigated to the correct URL before returning.
@@ -54,7 +56,7 @@ class LoginPage(BasePage):  # Inherit from BasePage
     def login_and_expect_success(self, username, password):
         self.login(username, password)
         # Assert that URL changes AND a specific element on the next page is visible
-        expect(self.page).to_have_url("https://www.saucedemo.com/inventory.html")
+        expect(self.page).to_have_url(config.BASE_URL + "inventory.html")
         expect(self.page_title).to_have_text(
             "Products")  # Explicitly wait for the title element to be correct
         # No return needed, just assertions for successful login flow

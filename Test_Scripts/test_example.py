@@ -79,7 +79,7 @@ def test_failing_example():
 
 def test_login_with_fixture(setup_data):
     """
-    Test a bsic login scenario using data from the fixture.
+    Test a basic login scenario using data from the fixture.
     'setup_data' is the name of the fixture function from conftest.py.
     Pytest automatically injects the 'data' dictionary into this argument.
     """
