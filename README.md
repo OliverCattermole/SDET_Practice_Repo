@@ -45,6 +45,8 @@ Setup: Initialises the Python virtual environment and installs system dependenci
 
 Static Analysis: Runs Flake8 to check for code style violations.
 
+Test Execution: Runs the full suite (UI & API) using pytest.
+
 Reporting: Generates and archives an Allure Report.
 
 Cleanup: Automatically tears down the virtual environment post-execution.
