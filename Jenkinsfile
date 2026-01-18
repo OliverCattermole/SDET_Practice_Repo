@@ -1,15 +1,10 @@
 // Jenkinsfile
 pipeline {
-    agent any // Tells Jenkins to run this pipeline on any available agent (your Docker container in this case)
+    agent any
 
-    // It's good practice to define environment variables for consistency
-    // However, sensitive data should still use withCredentials as you correctly do.
     environment {
-        // Define common variables needed by your tests to connect to the DB
-        //DB_HOST = 'localhost' // If tests run on Jenkins agent and connect via mapped port
-        //DB_PORT = '5432'
-        //DB_NAME = 'test_database' // From your docker-compose.yml
-        API_BASE_URL = 'https://jsonplaceholder.typicode.com' // Define the base URL here
+        // Shared config for tests. Sensitive info stays in withCredentials below.
+        API_BASE_URL = 'https://jsonplaceholder.typicode.com'
     }
 
     stages {
@@ -21,6 +16,7 @@ pipeline {
                     sh 'apt-get install -y python3 python3-venv'
 
                     echo "Creating and activating virtual environment..."
+                    // Setup venv and pull in dependencies
                     sh 'python3 -m venv venv_jenkins'
                     sh '. venv_jenkins/bin/activate'
 
@@ -28,6 +24,7 @@ pipeline {
                     sh 'venv_jenkins/bin/pip install -r requirements.txt'
 
                     echo "Installing Playwright browser binaries and dependencies..."
+                    // Playwright needs both the binaries and system-level libs
                     sh 'venv_jenkins/bin/playwright install'
                     sh 'venv_jenkins/bin/playwright install-deps'
                 }
@@ -41,7 +38,7 @@ pipeline {
                     // Run flake8 on Test_Scripts directory
                     // --show-source: shows the line of code causing the warning
                     // --statistics: shows counts for each type of warning/error
-                    // || true: This makes the step not fail the build immediately if linting issues are found.
+                    // || true prevents linting errors from killing the whole build
                     //         Remove '|| true' if you want linting errors to FAIL the build.
                     sh 'venv_jenkins/bin/flake8 Test_Scripts/ --show-source --statistics || true'
                     echo "Flake8 check complete."
@@ -53,6 +50,7 @@ pipeline {
             steps {
                 script {
                     echo "Running Pytest tests..."
+                    // Running in parallel (-n auto) to speed up execution
                     sh '''
                         export API_BASE_URL="${API_BASE_URL}"
                         venv_jenkins/bin/pytest -s -v -n auto --alluredir=allure-results Test_Scripts/test_web_example.py Test_Scripts/test_api_example.py
@@ -63,13 +61,10 @@ pipeline {
 
         stage('Publish Allure Report') {
             steps {
-                // The allure plugin provides this step directly.
-                // The path is relative to the Jenkins workspace root.
-                // If 'cd Test_Scripts' was used above, the results will be in Test_Scripts/allure-results.
                 allure([
                     reportBuildPolicy: 'ALWAYS', // Always generate report
                     results: [
-                        [path: 'allure-results'] // Path to allure-results folder
+                        [path: 'allure-results']
                     ]
                 ])
             }
@@ -83,8 +78,6 @@ pipeline {
                     withCredentials([string(credentialsId: 'MY_DUMMY_API_TOKEN', variable: 'API_TOKEN_VAR')]) {
                         sh '''
                         echo "Attempting to use API Token..."
-                        # NEVER print the raw variable directly in production: echo "API_TOKEN_VAR: $API_TOKEN_VAR"
-                        # Simulate usage, Jenkins will mask it if the value is detected:
                         echo "API_Token_Start: ${API_TOKEN_VAR}" # This will be masked in logs
                         echo "curl -H \\"Authorization: Bearer ${API_TOKEN_VAR}\\" https://api.example.com/data"
                         echo "API_Token_End: ${API_TOKEN_VAR}"
@@ -111,8 +104,6 @@ pipeline {
 
     post {
         always {
-            // You can add steps here that always run after all stages
-            // For example, clean up workspace or send notifications
             sh 'rm -rf venv_jenkins' // Clean up virtual environment
         }
         failure {

@@ -15,22 +15,22 @@ services:
       # - ./db_data:/var/lib/postgresql/data # Persist data for local dev
       - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql # Run SQL script on startup
 
-  # (Optional) If you had a backend API application to test, it would go here:
+  # Example API setup:
   # my_api:
-  #   build: . # Or image: your_api_image
+  #   build: .
   #   ports:
   #     - "8000:8000"
   #   depends_on: # Ensure DB starts before API
   #     - test_db
   #   environment:
-  #     DATABASE_URL: postgres://test_user:test_password@test_db:5432/test_database # How API connects to DB
+  #     # Pass DB connection string to the app
+  #     DATABASE_URL: postgres://test_user:test_password@test_db:5432/test_database
 
     # Playwright browser service
     playwright_browser:
       image: mcr.microsoft.com/playwright/python:v1.44-focal # Use an official Playwright image
       ports:
         - "4444:4444" # Expose Playwright's default port if needed for remote connection
-      # Or, if Playwright tests run INSIDE a container:
       # command: /bin/bash # Keep container running for debugging
       # environment:
       #   PWDEBUG: 1 # Enable Playwright debug mode
