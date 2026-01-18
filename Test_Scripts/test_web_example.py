@@ -14,7 +14,7 @@ def test_example_page_title(page: Page):
     page.goto("https://playwright.dev/python/docs/intro")
     expect(page).to_have_title("Installation | Playwright Python")
     print(f"\nPage title is: {page.title()}")
-    page.screenshot(path="intro_page.png")  # Takes a screenshot!
+    page.screenshot(path="intro_page.png")
     print("Screenshot saved to intro_page.png")
 
 
@@ -24,26 +24,13 @@ def test_search_on_google(page: Page):
     """
     page.goto("https://www.google.com")
 
-    # Playwright's smart locators are great!
-    # It tries to find elements by their role, text, label, placeholder, etc.
-    # This makes tests more resilient than brittle CSS/XPath selectors.
-
-    # Find the search input field by its placeholder text
+    # Handle the cookie consent pop-up
     page.get_by_role("button", name="Accept all").click()
 
-    #search_box = page.get_by_role("combobox", name="Search")
-    # using title locator
+    # Preferring title locator here over combobox for stability
     search_box = page.get_by_title("Search")
     search_box.fill("Playwright testing Python")  # Type text into the field
     search_box.press("Enter")  # Simulate pressing Enter
-
-    # Verify that the search results page title contains the search term
-    # Commented out because we actually reach a page that tries to confirm we are not a robot lol
-    # expect(page).to_have_title("Playwright testing Python - Google Search")
-
-    # Verify that an element with specific text content is visible
-    # Commented out because we actually reach a page that tries to confirm we are not a robot lol
-    # expect(page.get_by_text("Playwright", exact=True)).to_be_visible()
 
     page.screenshot(path="Google Search_results.png")
     print("Screenshot saved to Google Search_results.png")
@@ -52,7 +39,6 @@ def test_search_on_google(page: Page):
 def test_invalid_login_scenario(page: Page):
     """
     Simulates an invalid login and asserts an error message.
-    Using a publicly available demo site for this.
     """
     page.goto("https://www.saucedemo.com/")
 
@@ -61,16 +47,11 @@ def test_invalid_login_scenario(page: Page):
     # # Locate and fill password field
     # page.locator("[data-test=\"password\"]").fill("wrong_password")
 
-    # Using different locators
+    # Switching to ID locators for better reliability
     page.locator('id=user-name').fill("invalid_user")
     page.locator("id=password").fill("wrong_password")
-
-
-    # Locate and click the login button by text or CSS selector
     page.locator("#login-button").click()
 
-    # Playwright's web-first assertions automatically wait for the condition
-    # This is very powerful and reduces flakiness compared to explicit waits
     expect(page.locator("[data-test=\"error\"]")).to_have_text("Epic sadface: Username and password do not match any user in this service")
     print("\nInvalid login error message verified.")
     page.screenshot(path="invalid_login_error.png")
@@ -80,10 +61,10 @@ def test_invalid_login_scenario_with_page_object(page: Page):
     """
     Simulates an invalid login and asserts an error message using POM.
     """
-    login_page = LoginPage(page)  # Instantiate the Page Object, passing the Playwright page fixture
+    login_page = LoginPage(page)
 
     login_page.navigate()  # Use the Page Object's navigation method
-    login_page.login("invalid_user", "wrong_password")  # User the Page Object's login method
+    login_page.login("invalid_user", "wrong_password")  # Use the Page Object's login method
 
     expect(login_page.error_message).to_have_text("Epic sadface: Username and password do not match any user in this service")
     print("\nInvalid login error message verified.")
@@ -92,58 +73,35 @@ def test_invalid_login_scenario_with_page_object(page: Page):
 # Robust method
 
 
-def test_successful_login_scenario(page: Page):  # Assuming you have a successful login test
+def test_successful_login_scenario(page: Page):
     """
     Simulates a successful login and asserts navigation using POM with explicit waits.
     """
     login_page = LoginPage(page)
     login_page.navigate()
-    login_page.login_and_expect_success("standard_user", "secret_sauce")  # Uses the new robust method
+    login_page.login_and_expect_success("standard_user", "secret_sauce")  # Uses robust method
     print("\nSuccessful login verified using robust Page Object Model.")
     page.screenshot(path="successful_login_pom.png")
 
 
 # Basic Network Interception
 
-# def test_mock_api_response(page: Page):
-#     """
-#     Mocks an API response to test a UI component's behaviour without needed a real backend
-#     """
-#     # Intercept a specific URL pattern
-#     page.route("**/api/data", lambda route: route.fulfill(
-#         status=200,
-#         content_type="application/json",
-#         body='{"message": "Data successfully mocked!"}'
-#     ))
-#
-#     # Now, when the browser navigates to or makes a request to /api/data,
-#     # Playwright will return our mocked response instead of hitting the real server.
-#     # For demonstration, let's just make a direct request to it:
-#     page.goto("data:text/html,<script>fetch('/api/data').then(r=>r.json()).then(j=>document.body.textContent=j.message)</script>")
-#
-#     # Assert that the mocked data is displayed on the page
-#     expect(page.locator("body")).to_have_text("Data successfully mocked!")
-#     print("\nAPI response successfully mocked and verified.")
-#     page.screenshot(path="mocked_api_response.png")
-
 def test_mock_api_response(page: Page):
     """
     Mocks an API response to test a UI component's behaviour without needing a real backend
     """
-    # Define a clear, absolute URL for your mock
-    mock_url = "http://localhost:8000/api/data"  # Or any consistent, absolute URL you prefer
+    mock_url = "http://localhost:8000/api/data"
 
-    # Intercept this specific absolute URL
+    # Fulfill the request locally, so we don't need a real backend
     page.route(mock_url, lambda route: route.fulfill(
         status=200,
         content_type="application/json",
         body='{"message": "Data successfully mocked!"}'
     ))
 
-    # Now, make the fetch request to the absolute URL
-    # Playwright will return our mocked response instead of trying to hit the real server.
+    # Trigger a fetch to the mocked endpoint via injected JS
     page.goto(f"data:text/html,<script>"
-              f"fetch('{mock_url}')"  # Use the absolute URL here
+              f"fetch('{mock_url}')"
               f".then(r=>r.json())"
               f".then(j=>document.body.textContent=j.message)"
               f".catch(e=>document.body.textContent='Error: ' + e.message)"  # Added error handling for clarity
@@ -161,7 +119,6 @@ def test_block_image_request(page: Page):
     """
     page.route("**/*.{png,jpg,jpeg,gif,webp}", lambda route: route.abort())
 
-    # Navigate to a page that typically loads images (e.g., Wikipedia)
     page.goto("https://en.wikipedia.org/wiki/Wikipedia:Picture_of_the_day")
 
     # Verify that the page still loads and has content (though images will be missing)
