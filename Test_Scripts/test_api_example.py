@@ -35,14 +35,14 @@ def test_get_single_post():
     assert "body" in post_data
     print(f"GET single post (ID {post_id}) successful. Title: {post_data['title'][:30]}...")
 
-# A couple of data Driven API tests
 
+# A couple of data Driven API tests
 
 @pytest.mark.parametrize("post_id, expected_title_contains", [
     (1, "sunt aut facere"),  # Valid post 1
     (10, "optio molestias id quia eum"),  # Valid post 10
     (100, "at nam consequatur"),  # Valid post 100
-    (999999, None)  # Non-existent post (we'll adapt the test for this)
+    (999999, None)  # Non-existent post
 ])
 def test_get_single_post_data_driven(post_id, expected_title_contains):
     """
@@ -68,7 +68,6 @@ def test_get_single_post_data_driven(post_id, expected_title_contains):
     ("Another Valid Post", {"title": "Another Title", "body": "Another Body", "userId": 2}, 201),
     ("Post with Missing Body", {"title": "No Body Post", "userId": 3}, 201),  # JSONPlaceholder often still accepts this
     ("Post with Extra Field", {"title": "Extra Field", "body": "Data", "extra_field": "value", "userId": 4}, 201)
-    # JSONPlaceholder is very forgiving; a real API would likely return 400 for invalid payloads
 ])
 def test_create_post_data_driven(test_case_name, payload, expected_status_code):
     """
@@ -150,12 +149,12 @@ def test_get_non_existent_post():
     assert response.status_code == 404
     print(f"GET non-existent post (ID {post_id}) returned 404 as expected.")
 
-# JSON Schema related tests
 
+# JSON Schema related tests
 
 def load_json_schema(filename):
     """Loads a JSON schema from the 'schemas' directory."""
-    filepath = f"Test_Scripts/schemas/{filename}"  # Adjust path if your schemas folder is elsewhere
+    filepath = f"Test_Scripts/schemas/{filename}"
     with open(filepath, 'r') as file:
         return json.load(file)
 
@@ -178,9 +177,8 @@ def test_get_single_post_schema_validation():
     except ValidationError as e:
         pytest.fail(f"Schema validation failed for post ID {post_id}:\n{e.message}\nPath: {e.path}\nValidator: {e.validator}\nValidator Value: {e.validator_value}")
 
-# Optional: Test with an invalid schema (if you can simulate one)
-# This example will fail on purpose to show validation errors
 
+# This example will fail on purpose to show validation errors
 
 def test_invalid_post_schema_validation_example():
     """
@@ -194,8 +192,8 @@ def test_invalid_post_schema_validation_example():
         "body": "A valid body",
         "extraField": "unexpected value"  # additionalProperties: false should catch this
     }
-    # For demonstration, we'll try to validate this incorrect data against our schema
-    # In a real test, you'd be getting this from an API call that returned bad data
+    # Manually testing the schema validation with a "bad" payload
+    # In the real world, this would be retrieved from an API call that returned bad data
 
     try:
         validate(instance=invalid_data, schema=POST_SCHEMA)

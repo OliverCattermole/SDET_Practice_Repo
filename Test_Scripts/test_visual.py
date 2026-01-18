@@ -13,9 +13,9 @@ def test_visual_landing_2(page, assert_snapshot):
     inventory_page = InventoryPage(page)
     login_page.navigate()
     login_page.login_and_expect_success("standard_user", "secret_sauce")  # Uses the new robust method
-    """
-    We can mask elements on the screen that we do not want to include in the screenshot, as they may change. E.g. if
-    you add an item to the basket, the icon would change. Similar story for advertisements that may be on the page.
-    We mask as many elements as we want in the list
-    """
-    assert_snapshot(page.screenshot(mask=[inventory_page.shopping_cart_icon, inventory_page.sort_dropdown]), threshold=0.8)
+
+    # Masking elements that change frequently (cart count, dynamic ads, etc.) to prevent false baseline failures.
+    assert_snapshot(
+        page.screenshot(mask=[inventory_page.shopping_cart_icon, inventory_page.sort_dropdown]),
+        threshold=0.8
+    )

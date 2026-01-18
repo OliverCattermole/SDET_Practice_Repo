@@ -17,12 +17,12 @@ def test_add_function_parametrized(num1, num2, expected_sum):
     assert result == expected_sum
 
 
-# You can even parametrize a fixture! (More advanced, but good to see)
+# Parametrise a fixture
 @pytest.fixture(params=[
     ("user_a", "pass_a"),
     ("user_b", "pass_b")
 ])
-def parameterized_user(request):
+def parameterised_user(request):
     """ A fixture that provides different user credentials"""
     username, password = request.param
     print(f"\n--- Setting up parameterized user: {username} ---")
@@ -30,14 +30,14 @@ def parameterized_user(request):
     print(f"--- Cleaning up parameterized user: {username} ---")
 
 
-def test_login_with_different_users(parameterized_user):
+def test_login_with_different_users(parameterised_user):
     """
-    Tests login with different users provided by a parameterized fixture.
+    Tests login with different users provided by a parameterised fixture.
     """
-    print(f"Attempting login for user: {parameterized_user['username']}")
-    assert parameterized_user['password'] == "pass_a" or parameterized_user['password'] == "pass_b"
-    assert parameterized_user['username'].startswith("user_")
-    print(f"Login successful for {parameterized_user['username']} (simulated).")
+    print(f"Attempting login for user: {parameterised_user['username']}")
+    assert parameterised_user['password'] == "pass_a" or parameterised_user['password'] == "pass_b"
+    assert parameterised_user['username'].startswith("user_")
+    print(f"Login successful for {parameterised_user['username']} (simulated).")
 
 
 def add(a, b):

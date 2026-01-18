@@ -16,7 +16,7 @@ class BasePage:
     def goto(self, url: str):
         """Navigates to a specific URL."""
         self.page.goto(url)
-        # You could add a generic wait here, e.g., for network idle
+        # Generic example - wait until network is idle before proceeding
         self.page.wait_for_load_state("networkidle")
 
     def get_page_title(self) -> str:

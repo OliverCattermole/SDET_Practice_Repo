@@ -12,11 +12,10 @@ class InventoryPage(BasePage):
         super().__init__(page)
         self.products_title: Locator = page.locator(".title")
         self.shopping_cart_icon: Locator = page.locator("#shopping_cart_container")
-        # Add other locators and methods specific to the Inventory Page here
+        # TBU - Add other locators and methods specific to the Inventory Page here
         # e.g., add_to_cart_button, product_item_names, sort_dropdown
-        self.inventory_list: Locator = page.locator("[data-test='inventory-container']") #container for all products
+        self.inventory_list: Locator = page.locator("[data-test='inventory-container']")  # Container for all products
         self.sort_dropdown = page.locator("[data-test=\"product-sort-container\"]")
-
 
     def is_products_title_visible(self) -> bool:
         """Checks if the 'Products' title is visible on the page."""
@@ -38,4 +37,4 @@ class InventoryPage(BasePage):
         expect(self.page).to_have_url("https://www.saucedemo.com/cart.html")
         return CartPage(self.page)
 
-    # Add methods for actions on this page, e.g., add_item_to_cart, view_cart
+    # TBU - Add methods for actions on this page, e.g., view_cart

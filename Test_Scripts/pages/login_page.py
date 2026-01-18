@@ -29,17 +29,12 @@ class LoginPage(BasePage):  # Inherit from BasePage
 
     def login_successfully(self, username, password) -> InventoryPage:
         """Performs a login action and returns the InventoryPage object if successful.
-        This method is designed for scenarios where a successful login is expected
-        and you want to immediately interact with the next page.
         """
         self.login(username, password)
         # Use Playwright's expect to wait for the URL change or element presence,
         # ensuring the page loaded correctly before returning the new Page Object.
         # expect(self.page).to_have_url("https://www.saucedemo.com/inventory.html")
         expect(self.page).to_have_url(config.BASE_URL + "inventory.html")
-        # The next assertion about the title (or any specific element) should
-        # be done on the InventoryPage object itself, or directly in the test.
-        # Here we verify the page navigated to the correct URL before returning.
 
         return InventoryPage(self.page)  # Return the new Page Object
 
