@@ -1,4 +1,4 @@
-SDET Practice Repository
+sdet-practice-playwright
 
 📌 Project Overview
 This repository serves as a showcase of my Playwright, Pytest, Jenkins & Docker skills. It demonstrates a robust automated testing framework covering Web UI and API layers, integrated into a containerised CI/CD pipeline.
